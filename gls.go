@@ -19,13 +19,13 @@ var wg sync.WaitGroup
 
 type colorFunc func(interface{}) *color.Escape
 
-var colors map[string]colorFunc = map[string]colorFunc{
-	"no_version_control": blueBold,
-	"dirty":              redBold,
-	"no_remote":          redOnBlue,
-	"fetch_failed":       redOnBlue,
-	"branch_ahead":       greenOnOrange,
-	"branch_behind":      redOnOrange,
+var colorMap map[string]colorFunc = map[string]colorFunc{
+	"no_version_control": func(i interface{}) *color.Escape { return color.Bold(color.Blue(i)) },                  // Blue
+	"dirty":              func(i interface{}) *color.Escape { return color.Bold(color.Red(i)) },                   // Red
+	"no_remote":          func(i interface{}) *color.Escape { return color.BgBlue(color.Bold(color.Red(i))) },     // Red on Blue
+	"fetch_failed":       func(i interface{}) *color.Escape { return color.BgBlue(color.Bold(color.Red(i))) },     // Red on Blue
+	"branch_ahead":       func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Green(i))) }, //Green on Yellow
+	"branch_behind":      func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Red(i))) },   //Red on Yellow
 }
 
 // Struct returned by gls go-routines
@@ -56,7 +56,7 @@ func main() {
 	flag.BoolVar(&help, "help", false, "print help message")
 	flag.Parse()
 	if help {
-		for k, v := range colors {
+		for k, v := range colorMap {
 			fmt.Println(v(k))
 		}
 		return
@@ -89,13 +89,6 @@ func main() {
 	sort.Sort(ByName{projects})
 
 	printInCollumns(projects)
-}
-
-func printProjects(i []*Project) {
-	for _, v := range i {
-		fmt.Printf("%s\n", v.Name)
-	}
-	fmt.Print("\n")
 }
 
 func gls(dirName string, result chan Project) {
@@ -213,7 +206,7 @@ func printInCollumns(projects []*Project) {
 			if projects[index].State == "ok" {
 				toPrint = projects[index].Name
 			} else {
-				toPrint = (colors[projects[index].State](projects[index].Name)).String()
+				toPrint = (colorMap[projects[index].State](projects[index].Name)).String()
 			}
 
 			lenDiff := 0
@@ -239,24 +232,4 @@ func exists(path string) (bool, error) {
 		return false, nil
 	}
 	return false, err
-}
-
-func blueBold(i interface{}) *color.Escape {
-	return color.Bold(color.Blue(i))
-}
-
-func redBold(i interface{}) *color.Escape {
-	return color.Bold(color.Red(i))
-}
-
-func redOnBlue(i interface{}) *color.Escape {
-	return color.BgBlue(color.Bold(color.Red(i)))
-}
-
-func redOnOrange(i interface{}) *color.Escape {
-	return color.BgYellow(color.Bold(color.Red(i)))
-}
-
-func greenOnOrange(i interface{}) *color.Escape {
-	return color.BgYellow(color.Bold(color.Green(i)))
 }
