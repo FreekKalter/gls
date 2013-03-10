@@ -3,14 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/FreekKalter/text/columnswriter"
 	"github.com/str1ngs/ansi/color"
-	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -24,8 +23,8 @@ var colorMap map[string]colorFunc = map[string]colorFunc{
 	"dirty":              func(i interface{}) *color.Escape { return color.Bold(color.Red(i)) },                   // Red
 	"no_remote":          func(i interface{}) *color.Escape { return color.BgBlue(color.Bold(color.Red(i))) },     // Red on Blue
 	"fetch_failed":       func(i interface{}) *color.Escape { return color.BgBlue(color.Bold(color.Red(i))) },     // Red on Blue
-	"branch_ahead":       func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Green(i))) }, //Green on Yellow
-	"branch_behind":      func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Red(i))) },   //Red on Yellow
+	"branch_ahead":       func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Green(i))) }, // Green on Yellow
+	"branch_behind":      func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Red(i))) },   // Red on Yellow
 }
 
 // Struct returned by gls go-routines
@@ -66,8 +65,8 @@ func main() {
 		panic(err)
 	}
 	glsResults := make(chan Project, 100)
-	var projects Projects
 
+	var projects Projects
 	for _, file := range files {
 		file_info, _ := os.Stat(file)
 		if file_info.IsDir() {
@@ -83,12 +82,22 @@ func main() {
 	for res := range glsResults {
 		toAppend := res
 		toAppend.Name = filepath.Base(res.Name)
-
 		projects = append(projects, &toAppend)
 	}
 	sort.Sort(ByName{projects})
 
-	printInCollumns(projects)
+	var projectsString string
+	for _, p := range projects {
+		if p.State == "ok" {
+			projectsString = fmt.Sprintf("%s\t%s", projectsString, p.Name)
+		} else {
+			projectsString = fmt.Sprintf("%s\t%s", projectsString, colorMap[p.State](p.Name))
+		}
+	}
+
+	w := columnswriter.New(os.Stdout, '\t', 0, 2)
+	fmt.Fprint(w, projectsString)
+	w.Flush()
 }
 
 func gls(dirName string, result chan Project) {
@@ -151,76 +160,6 @@ func gls(dirName string, result chan Project) {
 
 	ret.State = "ok"
 	result <- ret
-}
-
-func printInCollumns(projects []*Project) {
-	nrProjects := len(projects)
-	nrTerminalColumnsInt32, _ := strconv.ParseInt(os.Getenv("COLUMNS"), 10, 32)
-	nrTerminalColumns := int(nrTerminalColumnsInt32)
-	var nrCollumns, nrRows, totalWidth int = 0, 1, 0
-	for _, file := range projects {
-		if (totalWidth + len(file.Name) + 1) > nrTerminalColumns {
-			break
-		}
-		totalWidth += len(file.Name) + 2
-		nrCollumns++
-	}
-	calcNrRows := func(projects, collumns int) int {
-		return int(math.Ceil(float64(projects) / float64(collumns)))
-	}
-	nrRows = calcNrRows(nrProjects, nrCollumns)
-
-	totalWidth = totalWidth * 2
-	var collumnWidths []int
-	for totalWidth > nrTerminalColumns {
-		totalWidth = 0
-		collumnWidths = []int{}
-		for x := 0; x < nrCollumns; x++ {
-			maxCollumnWidth := 0
-			for y := 0; y < nrRows; y++ {
-				index := y*nrCollumns + x
-				if index >= nrProjects {
-					break
-				}
-				if len(projects[index].Name) > maxCollumnWidth {
-					maxCollumnWidth = len(projects[index].Name)
-				}
-			}
-			totalWidth += maxCollumnWidth + 2
-			collumnWidths = append(collumnWidths, maxCollumnWidth)
-
-		}
-		if totalWidth > nrTerminalColumns {
-			nrCollumns--
-			nrRows = calcNrRows(nrProjects, nrCollumns)
-		}
-	}
-
-	for y := 0; y < nrRows; y++ {
-		for x := 0; x < nrCollumns; x++ {
-			index := y*nrCollumns + x
-			if index >= nrProjects {
-				break
-			}
-			var toPrint string
-			if projects[index].State == "ok" {
-				toPrint = projects[index].Name
-			} else {
-				toPrint = (colorMap[projects[index].State](projects[index].Name)).String()
-			}
-
-			lenDiff := 0
-			if projects[index].State != "ok" {
-				lenDiff = len(toPrint) - len(projects[index].Name)
-			}
-			if len(collumnWidths) > 0 {
-				fmt.Printf("%-*s", collumnWidths[x]+lenDiff+2, toPrint)
-			} else {
-				fmt.Printf("%-*s", lenDiff+2, toPrint)
-			}
-		}
-		fmt.Print("\n")
-	}
 }
 
 func exists(path string) (bool, error) {
