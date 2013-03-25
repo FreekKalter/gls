@@ -22,7 +22,7 @@ var colorMap map[string]colorFunc = map[string]colorFunc{
 	"no_version_control": func(i interface{}) *color.Escape { return color.Bold(color.Blue(i)) },                  // Blue
 	"dirty":              func(i interface{}) *color.Escape { return color.Bold(color.Red(i)) },                   // Red
 	"no_remote":          func(i interface{}) *color.Escape { return color.BgBlue(color.Bold(color.Red(i))) },     // Red on Blue
-	"fetch_failed":       func(i interface{}) *color.Escape { return color.BgBlue(color.Bold(color.Red(i))) },     // Red on Blue
+	"fetch_failed":       func(i interface{}) *color.Escape { return color.BgRed(color.Bold(color.Blue(i))) },     // Red on Blue
 	"branch_ahead":       func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Green(i))) }, // Green on Yellow
 	"branch_behind":      func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Red(i))) },   // Red on Yellow
 }
@@ -45,7 +45,7 @@ func (s ByName) Less(i, j int) bool {
 
 var (
 	cleanGitRegex = regexp.MustCompile("nothing to commit")
-	fetchErrors   = regexp.MustCompile("ERROR")
+	fetchErrors   = regexp.MustCompile("^fatal")
 	branchAhead   = regexp.MustCompile("branch is ahead of")
 	branchBehind  = regexp.MustCompile("branch is behind")
 )
@@ -60,11 +60,11 @@ func main() {
 		}
 		return
 	}
-	files, err := filepath.Glob("*")
+	files, err := filepath.Glob("../*")
 	if err != nil {
 		panic(err)
 	}
-	glsResults := make(chan Project, 100)
+	glsResults := make(chan Project, 1000)
 
 	var projects Projects
 	for _, file := range files {
@@ -80,6 +80,7 @@ func main() {
 	close(glsResults)
 
 	for res := range glsResults {
+		// make a copy to add to []projects, because res always points to the same address space
 		toAppend := res
 		toAppend.Name = filepath.Base(res.Name)
 		projects = append(projects, &toAppend)
@@ -138,7 +139,9 @@ func gls(dirName string, result chan Project) {
 	// Fetch latest changes from remote
 	output, err = exec.Command("git", gitDir, gitTree, "fetch").Output()
 	if err != nil {
-		panic(err)
+		ret.State = "fetch_failed"
+		result <- ret
+		return
 	}
 	outputStr := strings.TrimSpace(string(output))
 	if fetchErrors.MatchString(outputStr) {
@@ -146,6 +149,12 @@ func gls(dirName string, result chan Project) {
 		result <- ret
 		return
 	}
+
+	output, err = exec.Command("git", gitDir, gitTree, "status").Output()
+	if err != nil {
+		panic(err)
+	}
+	outputStr = strings.TrimSpace(string(output))
 
 	// Is branch ahead of behind of remote
 	if branchAhead.MatchString(outputStr) {
