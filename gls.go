@@ -60,7 +60,7 @@ func main() {
 		}
 		return
 	}
-	files, err := filepath.Glob("../*")
+	files, err := filepath.Glob("*")
 	if err != nil {
 		panic(err)
 	}
