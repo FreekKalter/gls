@@ -22,7 +22,7 @@ var colorMap map[string]colorFunc = map[string]colorFunc{
 	"no_version_control": func(i interface{}) *color.Escape { return color.Bold(color.Blue(i)) },                  // Blue
 	"dirty":              func(i interface{}) *color.Escape { return color.Bold(color.Red(i)) },                   // Red
 	"no_remote":          func(i interface{}) *color.Escape { return color.BgBlue(color.Bold(color.Red(i))) },     // Red on Blue
-	"fetch_failed":       func(i interface{}) *color.Escape { return color.BgRed(color.Bold(color.Blue(i))) },     // Red on Blue
+	"fetch_failed":       func(i interface{}) *color.Escape { return color.BgRed(color.Bold(color.Blue(i))) },     // Blue on Red
 	"branch_ahead":       func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Green(i))) }, // Green on Yellow
 	"branch_behind":      func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Red(i))) },   // Red on Yellow
 }
@@ -51,8 +51,10 @@ var (
 )
 
 func main() {
-	var help bool
+	var help, list bool
+	//TODO: Add sort by name or state
 	flag.BoolVar(&help, "help", false, "print help message")
+	flag.BoolVar(&list, "l", false, "display results in 1 long list")
 	flag.Parse()
 	if help {
 		for k, v := range colorMap {
@@ -87,18 +89,29 @@ func main() {
 	}
 	sort.Sort(ByName{projects})
 
-	var projectsString string
-	for _, p := range projects {
-		if p.State == "ok" {
-			projectsString = fmt.Sprintf("%s\t%s", projectsString, p.Name)
-		} else {
-			projectsString = fmt.Sprintf("%s\t%s", projectsString, colorMap[p.State](p.Name))
+	if list {
+		for _, p := range projects {
+			if p.State == "ok" {
+				fmt.Printf("%s\n", p.Name)
+			} else {
+				fmt.Printf("%s\n", colorMap[p.State](p.Name))
+			}
 		}
-	}
+	} else {
 
-	w := columnswriter.New(os.Stdout, '\t', 0, 2)
-	fmt.Fprint(w, projectsString)
-	w.Flush()
+		var projectsString string
+		for _, p := range projects {
+			if p.State == "ok" {
+				projectsString = fmt.Sprintf("%s\t%s", projectsString, p.Name)
+			} else {
+				projectsString = fmt.Sprintf("%s\t%s", projectsString, colorMap[p.State](p.Name))
+			}
+		}
+
+		w := columnswriter.New(os.Stdout, '\t', 0, 2)
+		fmt.Fprint(w, projectsString)
+		w.Flush()
+	}
 }
 
 func gls(dirName string, result chan Project) {
