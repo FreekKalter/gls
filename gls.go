@@ -57,6 +57,9 @@ func main() {
 	flag.BoolVar(&list, "l", false, "display results in 1 long list")
 	flag.Parse()
 	if help {
+        fmt.Println("Options:")
+        fmt.Println("-l:   use a longlisting format (like ls -l)\n")
+        fmt.Println("Color codes:")
 		for k, v := range colorMap {
 			fmt.Println(v(k))
 		}
