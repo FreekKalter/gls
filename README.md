@@ -15,6 +15,9 @@ TODO: actualy implement this
 ![Screenshot](./Screenshot.png)
 
 
+![Screenshot](./Screenshot.jpg)
+
+
 ## Color codes
 
 	"no version control":  Blue
