@@ -14,9 +14,6 @@ This tool is written in [go](golang.org), so if you have go installed you can ge
 ![Screenshot](./Screenshot.png)
 
 
-![Screenshot](./Screenshot.jpg)
-
-
 ## Color codes
 
 	"no version control":  Blue
