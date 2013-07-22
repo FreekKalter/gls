@@ -6,7 +6,6 @@ overview of the `git status` of each folder.
 # Installation
 
 This tool is written in [go](golang.org), so if you have go installed you can get it with the default *go get* command.
-TODO: actualy implement this
 
     go get github.com/FreekKalter/gls
 
