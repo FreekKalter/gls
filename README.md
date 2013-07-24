@@ -9,7 +9,7 @@ overview of the `git status` of each folder.
 
         go get github.com/FreekKalter/gls
 
-2. See [releases](http://github.com/FreekKalter/gls/releases) for compiled binaries and linux packaged files.
+2. See [releases](http://github.com/FreekKalter/gls/releases) for compiled binaries for linux, mac and windows. 
 
 ## Usage
 
