@@ -5,11 +5,11 @@ overview of the `git status` of each folder.
 
 ## Installation
 
-1. This tool is written in [go](golang.org), so if you have go installed you can get it with the default `go get` command.
+1. This tool is written in [Go](http://golang.org), so if you have go installed you can get it with the default `go get` command.
 
         go get github.com/FreekKalter/gls
 
-2. See [releases](github.com/FreekKalter/gls/releases) for compiled binaries and linux packaged files.
+2. See [releases](http://github.com/FreekKalter/gls/releases) for compiled binaries and linux packaged files.
 
 ## Usage
 
