@@ -1,5 +1,9 @@
 {
 	"ArtifactsDest": "./binaries",
+	"TasksExclude": [
+		"pkg-build"
+	],
+	"Os": "linux windows darwin",
 	"Resources": {},
 	"PackageVersion": "1.0.0",
 	"FormatVersion": "0.8"
