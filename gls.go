@@ -3,9 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/FreekKalter/text/columnswriter"
-	"github.com/FreekKalter/text/tabwriter"
-	"github.com/str1ngs/ansi/color"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,9 +10,11 @@ import (
 	"sort"
 	"strings"
 	"sync"
-)
 
-var wg sync.WaitGroup
+	"github.com/FreekKalter/ansi/color"
+	"github.com/FreekKalter/text/columnswriter"
+	"github.com/FreekKalter/text/tabwriter"
+)
 
 type colorFunc func(interface{}) *color.Escape
 
@@ -29,29 +28,22 @@ var colorMap map[string]colorFunc = map[string]colorFunc{
 	"branch_behind":      func(i interface{}) *color.Escape { return color.BgYellow(color.Bold(color.Red(i))) },   // Red on Yellow
 }
 
-var TimeFormat = "Jan 2,2006 15:04"
-
-// Struct returned by gls go-routines
+// Struct passed between gls and main
 type Project struct {
 	Name, State string
 	Info        os.FileInfo
 }
-
 type Projects []*Project
 
 func (projects Projects) Len() int      { return len(projects) }
 func (projects Projects) Swap(i, j int) { projects[i], projects[j] = projects[j], projects[i] }
 
 type ByName struct{ Projects }
+type ByState struct{ Projects }
 
 func (s ByName) Less(i, j int) bool {
 	return strings.ToLower(s.Projects[i].Name) < strings.ToLower(s.Projects[j].Name)
 }
-
-type ByState struct{ Projects }
-
-var sortOrderStates = map[string]int{"ok": 0, "no_version_control": 1, "dirty": 2, "no_remote": 3, "fetch_failed": 4, "branch_ahead": 5, "branch_behind": 6}
-
 func (s ByState) Less(i, j int) bool {
 	return sortOrderStates[s.Projects[i].State] < sortOrderStates[s.Projects[j].State]
 }
@@ -63,10 +55,14 @@ var (
 	branchBehind  = regexp.MustCompile("branch is behind")
 )
 var help, list, onlyDirty, sortByState bool
+var sortOrderStates = map[string]int{"ok": 0, "no_version_control": 1, "dirty": 2, "no_remote": 3, "fetch_failed": 4, "branch_ahead": 5, "branch_behind": 6}
+var TimeFormat = "Jan 2,2006 15:04"
+var wg sync.WaitGroup
 
 func main() {
 	flag.BoolVar(&help, "help", false, "print help message")
 	flag.BoolVar(&list, "l", false, "display results in 1 long list")
+	//TODO: Add -a for all (like ls)
 	flag.BoolVar(&onlyDirty, "dirty", false, "only show diry dirs, this is very fast because it does not check remotes")
 	flag.BoolVar(&sortByState, "statesort", false, "sort output by state")
 	flag.Parse()
