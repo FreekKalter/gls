@@ -20,6 +20,7 @@ type colorFunc func(interface{}) *color.Escape
 
 var colorMap map[string]colorFunc = map[string]colorFunc{
 	"ok":                 func(i interface{}) *color.Escape { return color.BgDefault(color.Default(i)) },
+	"file":               func(i interface{}) *color.Escape { return color.BgDefault(color.Default(i)) },
 	"no_version_control": func(i interface{}) *color.Escape { return color.Bold(color.Blue(i)) },                  // Blue
 	"dirty":              func(i interface{}) *color.Escape { return color.Bold(color.Red(i)) },                   // Red
 	"no_remote":          func(i interface{}) *color.Escape { return color.BgBlue(color.Bold(color.Red(i))) },     // Red on Blue
@@ -54,15 +55,15 @@ var (
 	branchAhead   = regexp.MustCompile("branch is ahead of")
 	branchBehind  = regexp.MustCompile("branch is behind")
 )
-var help, list, onlyDirty, sortByState bool
+var help, list, onlyDirty, sortByState, all bool
 var sortOrderStates = map[string]int{"ok": 0, "no_version_control": 1, "dirty": 2, "no_remote": 3, "fetch_failed": 4, "branch_ahead": 5, "branch_behind": 6}
 var TimeFormat = "Jan 2,2006 15:04"
 var wg sync.WaitGroup
 
 func main() {
 	flag.BoolVar(&help, "help", false, "print help message")
-	flag.BoolVar(&list, "l", false, "display results in 1 long list")
-	//TODO: Add -a for all (like ls)
+	flag.BoolVar(&list, "list", false, "display results in 1 long list")
+	flag.BoolVar(&all, "all", false, "display files and folders staring with a dot")
 	flag.BoolVar(&onlyDirty, "dirty", false, "only show diry dirs, this is very fast because it does not check remotes")
 	flag.BoolVar(&sortByState, "statesort", false, "sort output by state")
 	flag.Parse()
@@ -75,12 +76,27 @@ func main() {
 		}
 		return
 	}
-	files, err := filepath.Glob("*")
+
+    // Sort out path and files in that dir
+	var path string
+	if len(flag.Args()) > 0 {
+		path = flag.Arg(0)
+	} else {
+		path = "."
+	}
+	var files []string
+	var err error
+	if all {
+		files, err = filepath.Glob(filepath.Join(path, "*"))
+	} else {
+		files, err = filepath.Glob(filepath.Join(path, "[^.]*"))
+	}
 	if err != nil {
 		panic(err)
 	}
-	glsResults := make(chan *Project, 1000)
 
+    // Start goroutine for every dir found
+	glsResults := make(chan *Project, 1000)
 	var projects Projects
 	for _, file := range files {
 		file_info, _ := os.Stat(file)
@@ -88,12 +104,14 @@ func main() {
 			wg.Add(1)
 			go gls(&Project{Name: file, Info: file_info}, glsResults)
 		} else {
-			projects = append(projects, &Project{Name: file, State: "ok", Info: file_info})
+			projects = append(projects, &Project{Name: file, State: "file", Info: file_info})
 		}
 	}
 	wg.Wait()
 	close(glsResults)
 
+
+    // Gather results and process them
 	for res := range glsResults {
 		// make a copy to add to []projects, because res always points to the same address space
 		toAppend := res
@@ -107,6 +125,7 @@ func main() {
 	}
 
 	if list {
+		//TODO: 0 pad dates
 		w := new(tabwriter.Writer)
 		w.Init(os.Stdout, 0, 8, 0, '\t', tabwriter.StripEscape)
 		for _, p := range projects {
