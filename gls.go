@@ -123,7 +123,9 @@ func main() {
 			wg.Add(1)
 			go gls(&Project{Name: file, Info: file_info}, glsResults)
 		} else {
-			projects = append(projects, &Project{Name: file, State: "file", Info: file_info})
+            if !onlyDirty{
+                projects = append(projects, &Project{Name: file, State: "file", Info: file_info})
+            }
 		}
 	}
 	wg.Wait()
