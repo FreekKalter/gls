@@ -59,7 +59,7 @@ var (
 
 var help, list, onlyDirty, sortByState, all bool
 var sortOrderStates = map[string]int{"ok": 0, "no_version_control": 1, "dirty": 2, "no_remote": 3, "fetch_failed": 4, "branch_ahead": 5, "branch_behind": 6}
-var TimeFormat = "Jan 2,2006 15:04"
+var TimeFormat = "Jan 02,2006 15:04"
 var wg sync.WaitGroup
 
 func main() {
@@ -142,7 +142,6 @@ func main() {
 	}
 
 	if list {
-		//TODO: 0 pad dates
 		w := new(tabwriter.Writer)
 		w.Init(os.Stdout, 0, 8, 0, '\t', tabwriter.StripEscape)
 		for _, p := range projects {
