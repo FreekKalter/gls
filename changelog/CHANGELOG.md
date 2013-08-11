@@ -1,3 +1,7 @@
+---
+layout: default
+title: changelog
+---
 ## v.1.1.0
 
 * Better commanline flag handling, accecp long an short options

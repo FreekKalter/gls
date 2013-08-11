@@ -1,4 +1,9 @@
-# *Gls* 
+---
+layout: post
+title: gls
+---
+
+# *Gls*
 
 Gls, as in `git ls` . If you are like me and have folder in home directory called "projects" or the like, this command will give a quick color-code
 overview of the `git status` of each folder.
@@ -9,11 +14,11 @@ overview of the `git status` of each folder.
 
         go get github.com/FreekKalter/gls
 
-2. See [releases](http://github.com/FreekKalter/gls/releases) for compiled binaries for linux, mac and windows. 
+2. See [releases](http://github.com/FreekKalter/gls/releases) for compiled binaries for linux, mac and windows.
 
 ## Usage
 
-![Screenshot](./Screenshot.png)
+![Screenshot]({{ site.url }}/images/Screenshot.png)
 
 
 ## Color codes
