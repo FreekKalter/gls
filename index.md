@@ -18,7 +18,7 @@ overview of the `git status` of each folder.
 
 ## Usage
 
-![Screenshot]({{ site.url }}/images/Screenshot.png)
+![Screenshot]({{ site.baseurl }}/images/Screenshot.png)
 
 
 ## Color codes
