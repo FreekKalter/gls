@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -145,7 +146,11 @@ func main() {
 		w := new(tabwriter.Writer)
 		w.Init(os.Stdout, 0, 8, 0, '\t', tabwriter.StripEscape)
 		for _, p := range projects {
-			fmt.Fprintf(w, "%s\t%s\t%s\n", colorMap[p.State](p.Name), humanReadable(p.Info.Size()), p.Info.ModTime().Format(TimeFormat))
+            hm, err := humanReadable(p.Info.Size())
+            if err != nil {
+                panic(err)
+            }
+			fmt.Fprintf(w, "%s\t%s\t%s\n", colorMap[p.State](p.Name),hm , p.Info.ModTime().Format(TimeFormat))
 		}
 		w.Flush()
 	} else {
@@ -245,13 +250,16 @@ func exists(path string) (bool, error) {
 	return false, err
 }
 
-func humanReadable(filesize int64) string {
+func humanReadable(filesize int64) (string , error){
+    if filesize < 0 {
+        return "", errors.New("negative input")
+    }
 	fs := float64(filesize)
 	for _, x := range []string{"b", "kb", "mb", "gb", "tb"} {
 		if fs < 1024 {
-			return fmt.Sprintf("%3.1f % s", fs, x)
+			return fmt.Sprintf("%3.1f % s", fs, x), nil
 		}
 		fs /= 1024
 	}
-	return ""
+	return "",nil
 }
