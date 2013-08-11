@@ -14,6 +14,7 @@ import (
 	"github.com/FreekKalter/ansi/color"
 	"github.com/FreekKalter/text/columnswriter"
 	"github.com/FreekKalter/text/tabwriter"
+	Optarg "github.com/jteeuwen/go-pkg-optarg"
 )
 
 type colorFunc func(interface{}) *color.Escape
@@ -55,29 +56,46 @@ var (
 	branchAhead   = regexp.MustCompile("branch is ahead of")
 	branchBehind  = regexp.MustCompile("branch is behind")
 )
+
 var help, list, onlyDirty, sortByState, all bool
 var sortOrderStates = map[string]int{"ok": 0, "no_version_control": 1, "dirty": 2, "no_remote": 3, "fetch_failed": 4, "branch_ahead": 5, "branch_behind": 6}
 var TimeFormat = "Jan 2,2006 15:04"
 var wg sync.WaitGroup
 
 func main() {
-	flag.BoolVar(&help, "help", false, "print help message")
-	flag.BoolVar(&list, "list", false, "display results in 1 long list")
-	flag.BoolVar(&all, "all", false, "display files and folders staring with a dot")
-	flag.BoolVar(&onlyDirty, "dirty", false, "only show diry dirs, this is very fast because it does not check remotes")
-	flag.BoolVar(&sortByState, "statesort", false, "sort output by state")
-	flag.Parse()
-	if help {
-		flag.Usage()
-		fmt.Println("")
-		fmt.Println("Color codes:")
-		for k, v := range colorMap {
-			fmt.Println(v(k))
+	//flag.BoolVar(&help, "help", false, "print help message")
+	//flag.BoolVar(&list, "list", false, "display results in 1 long list")
+	//flag.BoolVar(&all, "all", false, "display files and folders staring with a dot")
+	//flag.BoolVar(&onlyDirty, "dirty", false, "only show diry dirs, this is very fast because it does not check remotes")
+	//flag.BoolVar(&sortByState, "statesort", false, "sort output by state")
+	//flag.Parse()
+	Optarg.Add("h", "help", "print help message", false)
+	Optarg.Add("l", "list", "display results in 1 long list", false)
+	Optarg.Add("a", "all", "display files and folders staring with a dot", false)
+	Optarg.Add("d", "dirty", "only show diry dirs, this is very fast because it does not check remotes", false)
+	Optarg.Add("s", "statesort", "sort output by state", false)
+	for opt := range Optarg.Parse() {
+		switch opt.ShortName {
+		case "h":
+			Optarg.Usage()
+			fmt.Println("")
+			fmt.Println("Color codes:")
+			for k, v := range colorMap {
+				fmt.Println(v(k))
+			}
+			return
+		case "l":
+			list = true
+		case "a":
+			all = true
+		case "d":
+			onlyDirty = true
+		case "s":
+			sortByState = true
 		}
-		return
 	}
 
-    // Sort out path and files in that dir
+	// Sort out path and files in that dir
 	var path string
 	if len(flag.Args()) > 0 {
 		path = flag.Arg(0)
@@ -95,7 +113,7 @@ func main() {
 		panic(err)
 	}
 
-    // Start goroutine for every dir found
+	// Start goroutine for every dir found
 	glsResults := make(chan *Project, 1000)
 	var projects Projects
 	for _, file := range files {
@@ -110,8 +128,7 @@ func main() {
 	wg.Wait()
 	close(glsResults)
 
-
-    // Gather results and process them
+	// Gather results and process them
 	for res := range glsResults {
 		// make a copy to add to []projects, because res always points to the same address space
 		toAppend := res
