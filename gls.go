@@ -33,8 +33,8 @@ var colorMap map[string]colorFunc = map[string]colorFunc{
 
 // Struct passed between gls and main
 type Project struct {
-	Name, State string
-	Info        os.FileInfo
+	Name, State, Commit string
+	Info                os.FileInfo
 }
 type Projects []*Project
 
@@ -123,9 +123,9 @@ func main() {
 			wg.Add(1)
 			go gls(&Project{Name: file, Info: file_info}, glsResults)
 		} else {
-            if !onlyDirty{
-                projects = append(projects, &Project{Name: file, State: "file", Info: file_info})
-            }
+			if !onlyDirty {
+				projects = append(projects, &Project{Name: file, State: "file", Info: file_info})
+			}
 		}
 	}
 	wg.Wait()
@@ -148,11 +148,11 @@ func main() {
 		w := new(tabwriter.Writer)
 		w.Init(os.Stdout, 0, 8, 0, '\t', tabwriter.StripEscape)
 		for _, p := range projects {
-            hm, err := humanReadable(p.Info.Size())
-            if err != nil {
-                panic(err)
-            }
-			fmt.Fprintf(w, "%s\t%s\t%s\n", colorMap[p.State](p.Name),hm , p.Info.ModTime().Format(TimeFormat))
+			hm, err := humanReadable(p.Info.Size())
+			if err != nil {
+				panic(err)
+			}
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", colorMap[p.State](p.Name), hm, p.Info.ModTime().Format(TimeFormat), p.Commit)
 		}
 		w.Flush()
 	} else {
@@ -182,6 +182,11 @@ func gls(project *Project /*dirName string*/, result chan *Project) {
 
 	gitDir := fmt.Sprintf("--git-dir=%s", filepath.Join(project.Name, ".git"))
 	gitTree := fmt.Sprintf("--work-tree=%s", project.Name)
+    lastCommit, err := exec.Command("git", gitDir, gitTree, "--no-pager", "log", "--format=format:%h - %s", "-1").Output()
+	if err != nil {
+		panic(err)
+	}
+	project.Commit = string(lastCommit)
 	output, err := exec.Command("git", gitDir, gitTree, "status").Output() //, gitDir, gitTree, "status")
 	if err != nil {
 		panic(err)
@@ -252,10 +257,10 @@ func exists(path string) (bool, error) {
 	return false, err
 }
 
-func humanReadable(filesize int64) (string , error){
-    if filesize < 0 {
-        return "", errors.New("negative input")
-    }
+func humanReadable(filesize int64) (string, error) {
+	if filesize < 0 {
+		return "", errors.New("negative input")
+	}
 	fs := float64(filesize)
 	for _, x := range []string{"b", "kb", "mb", "gb", "tb"} {
 		if fs < 1024 {
@@ -263,5 +268,5 @@ func humanReadable(filesize int64) (string , error){
 		}
 		fs /= 1024
 	}
-	return "",nil
+	return "", nil
 }
