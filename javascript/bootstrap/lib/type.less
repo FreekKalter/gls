@@ -6,7 +6,7 @@
 // BODY TEXT
 // ---------
 
-p {
+p, li {
   #font > .basic(normal,@basefont,@baseline);
   margin-bottom: @baseline / 2;
   small {
@@ -87,7 +87,6 @@ ol {
 }
 li {
   line-height: @baseline;
-  color: @gray;
 }
 ul.unstyled {
   list-style: none;
@@ -166,7 +165,8 @@ code, pre {
   .border-radius(3px);
 }
 code {
-  background-color: lighten(@orange, 40%);
+  /*background-color: lighten(@orange, 40%);*/
+  background-color: @grayLighter;
   color: rgba(0,0,0,.75);
   padding: 1px 3px;
 }

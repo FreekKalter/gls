@@ -6,7 +6,7 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Designed and built with all the love in the world @twitter by @mdo and @fat.
- * Date: Sun Aug 11 22:57:58 CEST 2013
+ * Date: Mon Aug 12 21:02:25 CEST 2013
  */
 /* Reset.less
  * Props to Eric Meyer (meyerweb.com) for his CSS reset file. We're using an adapted version here	that cuts out some of the reset HTML elements we will never need here (i.e., dfn, samp, etc).
@@ -436,7 +436,8 @@ a:hover {
 /* Typography.less
  * Headings, body text, lists, code, and more for a versatile and durable typography system
  * ---------------------------------------------------------------------------------------- */
-p {
+p,
+li {
   font-family: adelle, Helvetica, Arial, sans-serif;
   font-size: 15px;
   font-weight: 200;
@@ -444,7 +445,8 @@ p {
   line-height: 19px;
   margin-bottom: 9.5px;
 }
-p small {
+p small,
+li small {
   font-size: 13px;
   color: #bfbfbf;
 }
@@ -524,7 +526,6 @@ ol {
 }
 li {
   line-height: 19px;
-  color: #808080;
 }
 ul.unstyled {
   list-style: none;
@@ -596,7 +597,9 @@ pre {
   border-radius: 3px;
 }
 code {
-  background-color: #fee9cc;
+  /*background-color: lighten(@orange, 40%);*/
+
+  background-color: #e6e6e6;
   color: rgba(0, 0, 0, 0.75);
   padding: 1px 3px;
 }
