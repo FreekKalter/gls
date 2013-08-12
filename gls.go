@@ -21,7 +21,7 @@ import (
 type colorFunc func(interface{}) *color.Escape
 
 var colorMap map[string]colorFunc = map[string]colorFunc{
-	"ok":                 func(i interface{}) *color.Escape { return color.BgDefault(color.Default(i)) },
+	"ok":                 func(i interface{}) *color.Escape { return color.BgDefault(color.Bold(color.Default(i))) },
 	"file":               func(i interface{}) *color.Escape { return color.BgDefault(color.Default(i)) },
 	"no_version_control": func(i interface{}) *color.Escape { return color.Bold(color.Blue(i)) },                  // Blue
 	"dirty":              func(i interface{}) *color.Escape { return color.Bold(color.Red(i)) },                   // Red
