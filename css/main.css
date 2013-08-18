@@ -1,0 +1,73 @@
+body{
+    font-family: adelle, Helvetica, sans-serif;
+    color: #404040;
+    font-size: 15px;
+    font-weight: 200;
+    line-height: 19px;
+}
+
+h1{
+    font-size: 2.0em;
+}
+
+a {
+    color: #4592FF;
+}
+
+img {
+    width: 940px;
+}
+
+#about p{
+    font-style: italic;
+}
+
+/**************** Navigation bar *********************/
+.nav > li{
+    display: block;
+    float: left;
+    margin: 0 10px 0 0;
+}
+
+.nav a{
+    padding: 10px 10px 11px;
+    line-height: 19px;
+}
+
+.nav > li > a:hover, a:hover{
+    color: #3335e8;
+    text-decoration: none;
+    background-color: #FFFFFF;
+}
+
+.topbar a {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+
+/********************* Footer *********************/
+#footer{
+    bottom: 0;
+    position: fixed;
+    border-top: 1px solid #E6E6E6;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 5px;
+    display: block;
+    top: auto;
+    clear: both;
+}
+
+#footer p{
+    font-style: italic;
+}
+
+.contact{
+    float: left;
+    text-align: right;
+}
+
+.container{
+    width: 940px;
+}
