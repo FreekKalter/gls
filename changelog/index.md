@@ -6,8 +6,10 @@ title: changelog
 
 * Better commanline flag handling, accecp long an short options
 * Added more options -a/--all, -d/--dirty,
-    --all : show *all* files (including .bobloblaw)
-    --dirty: only show dirty dir (this is super fast, it does not check remote branches)
+
+  - --all : show *all* files (including .bobloblaw)
+  - --dirty: only show dirty dir (this is super fast, it does not check remote branches)
+
 * Added sorting ( by state, TODO: more sorting options)
 * bugfixes ( 0 padding of dates )
 
