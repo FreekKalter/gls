@@ -58,10 +58,18 @@ var (
 	branchBehind  = regexp.MustCompile("branch is behind")
 )
 
-var help, list, onlyDirty, sortByState, all bool
-var sortOrderStates = map[string]int{"ok": 0, "no_version_control": 1, "dirty": 2, "no_remote": 3, "fetch_failed": 4, "branch_ahead": 5, "branch_behind": 6}
-var TimeFormat = "Jan 02,2006 15:04"
-var wg sync.WaitGroup
+var (
+	help, list, onlyDirty, sortByState, all, verbose bool
+	sortOrderStates                                  = map[string]int{"ok": 0, "no_version_control": 1, "dirty": 2, "no_remote": 3, "fetch_failed": 4, "branch_ahead": 5, "branch_behind": 6}
+	TimeFormat                                       = "Jan 02,2006 15:04"
+	wg                                               sync.WaitGroup
+)
+
+func verboseLog(i string) {
+	if verbose {
+		fmt.Println(i)
+	}
+}
 
 func main() {
 	//flag.BoolVar(&help, "help", false, "print help message")
@@ -75,6 +83,7 @@ func main() {
 	Optarg.Add("a", "all", "display files and folders staring with a dot", false)
 	Optarg.Add("d", "dirty", "only show diry dirs, this is very fast because it does not check remotes", false)
 	Optarg.Add("s", "statesort", "sort output by state", false)
+	Optarg.Add("v", "verbose", "show what is going on", false)
 	for opt := range Optarg.Parse() {
 		switch opt.ShortName {
 		case "h":
@@ -93,9 +102,10 @@ func main() {
 			onlyDirty = true
 		case "s":
 			sortByState = true
+		case "v":
+			verbose = true
 		}
 	}
-
 	// Sort out path and files in that dir
 	var path string
 	if len(flag.Args()) > 0 {
@@ -121,6 +131,7 @@ func main() {
 		file_info, _ := os.Stat(file)
 		if file_info.IsDir() {
 			wg.Add(1)
+			verboseLog(fmt.Sprintf("starting %s", file))
 			go gls(&Project{Name: file, Info: file_info}, glsResults)
 		} else {
 			if !onlyDirty {
@@ -129,6 +140,7 @@ func main() {
 		}
 	}
 	wg.Wait()
+	verboseLog("finished all goroutines")
 	close(glsResults)
 
 	// Gather results and process them
@@ -182,7 +194,7 @@ func gls(project *Project /*dirName string*/, result chan *Project) {
 
 	gitDir := fmt.Sprintf("--git-dir=%s", filepath.Join(project.Name, ".git"))
 	gitTree := fmt.Sprintf("--work-tree=%s", project.Name)
-    lastCommit, err := exec.Command("git", gitDir, gitTree, "--no-pager", "log", "--format=format:%h - %s", "-1").Output()
+	lastCommit, err := exec.Command("git", gitDir, gitTree, "--no-pager", "log", "--format=format:%h - %s", "-1").Output()
 	if err != nil {
 		panic(err)
 	}
@@ -199,6 +211,7 @@ func gls(project *Project /*dirName string*/, result chan *Project) {
 	} else if onlyDirty {
 		return
 	}
+	verboseLog(project.Name + " is not dirty")
 
 	// Check if the repo has a remote
 	output, err = exec.Command("git", gitDir, gitTree, "remote", "-v").Output()
@@ -218,12 +231,14 @@ func gls(project *Project /*dirName string*/, result chan *Project) {
 		result <- project
 		return
 	}
+	verboseLog("fetch exec succesful")
 	outputStr := strings.TrimSpace(string(output))
 	if fetchErrors.MatchString(outputStr) {
 		project.State = "fetch_failed"
 		result <- project
 		return
 	}
+	verboseLog("fetch return status succesful")
 
 	output, err = exec.Command("git", gitDir, gitTree, "status").Output()
 	if err != nil {
@@ -241,6 +256,7 @@ func gls(project *Project /*dirName string*/, result chan *Project) {
 		result <- project
 		return
 	}
+	verboseLog("everything ok, should return")
 
 	project.State = "ok"
 	result <- project
