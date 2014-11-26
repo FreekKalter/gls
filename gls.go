@@ -8,14 +8,15 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime/pprof"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/FreekKalter/ansi/color"
 	"github.com/FreekKalter/text/columnswriter"
 	"github.com/FreekKalter/text/tabwriter"
-	Optarg "github.com/jteeuwen/go-pkg-optarg"
 )
 
 type colorFunc func(interface{}) *color.Escape
@@ -60,6 +61,7 @@ var (
 
 var (
 	help, list, onlyDirty, sortByState, all, verbose bool
+	cpuprofile                                       string
 	sortOrderStates                                  = map[string]int{"ok": 0, "no_version_control": 1, "dirty": 2, "no_remote": 3, "fetch_failed": 4, "branch_ahead": 5, "branch_behind": 6}
 	TimeFormat                                       = "Jan 02,2006 15:04"
 	wg                                               sync.WaitGroup
@@ -72,39 +74,31 @@ func verboseLog(i string) {
 }
 
 func main() {
-	//flag.BoolVar(&help, "help", false, "print help message")
-	//flag.BoolVar(&list, "list", false, "display results in 1 long list")
-	//flag.BoolVar(&all, "all", false, "display files and folders staring with a dot")
-	//flag.BoolVar(&onlyDirty, "dirty", false, "only show diry dirs, this is very fast because it does not check remotes")
-	//flag.BoolVar(&sortByState, "statesort", false, "sort output by state")
-	//flag.Parse()
-	Optarg.Add("h", "help", "print help message", false)
-	Optarg.Add("l", "list", "display results in 1 long list", false)
-	Optarg.Add("a", "all", "display files and folders staring with a dot", false)
-	Optarg.Add("d", "dirty", "only show diry dirs, this is very fast because it does not check remotes", false)
-	Optarg.Add("s", "statesort", "sort output by state", false)
-	Optarg.Add("v", "verbose", "show what is going on", false)
-	for opt := range Optarg.Parse() {
-		switch opt.ShortName {
-		case "h":
-			Optarg.Usage()
-			fmt.Println("")
-			fmt.Println("Color codes:")
-			for k, v := range colorMap {
-				fmt.Println(v(k))
-			}
-			return
-		case "l":
-			list = true
-		case "a":
-			all = true
-		case "d":
-			onlyDirty = true
-		case "s":
-			sortByState = true
-		case "v":
-			verbose = true
+	flag.BoolVar(&help, "help", false, "print help message")
+	flag.BoolVar(&list, "list", false, "display results in 1 long list")
+	flag.BoolVar(&all, "all", false, "display files and folders staring with a dot")
+	flag.BoolVar(&onlyDirty, "dirty", false, "only show diry dirs, this is very fast because it does not check remotes")
+	flag.BoolVar(&sortByState, "statesort", false, "sort output by state")
+	flag.BoolVar(&verbose, "verbose", false, "verbose (debug) output")
+	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to file")
+	originalUsage := flag.Usage
+	flag.Usage = func() {
+		originalUsage()
+		fmt.Println("")
+		fmt.Println("Color codes:")
+		for k, v := range colorMap {
+			fmt.Println(v(k))
 		}
+	}
+	flag.Parse()
+
+	if cpuprofile != "" {
+		f, err := os.Create(cpuprofile)
+		if err != nil {
+			fmt.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
 	}
 	// Sort out path and files in that dir
 	var path string
@@ -139,7 +133,10 @@ func main() {
 			}
 		}
 	}
+	before := time.Now()
+	fmt.Println("all started")
 	wg.Wait()
+	fmt.Printf("finished waiting: %d\n", time.Now().Sub(before)/time.Millisecond)
 	verboseLog("finished all goroutines")
 	close(glsResults)
 
